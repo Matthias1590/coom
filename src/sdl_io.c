@@ -6,7 +6,7 @@ static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
 bool io_init(void) {
-    if (SDL_CreateWindowAndRenderer(640, 480, 0, &window, &renderer) < 0) {
+    if (SDL_CreateWindowAndRenderer(320, 200, 0, &window, &renderer) < 0) {
         return false;
     }
 

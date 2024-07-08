@@ -1,6 +1,9 @@
 #pragma once
 
-#define PI 3.14159
+#include <stdint.h>
+#include "bios_math.h"
+
+#define TWO_PI 6.28318530718
 #define EPS 0.00001
 
 #define DEGREES(a) \
@@ -26,8 +29,8 @@ typedef struct {
 } v2f_t;
 
 typedef struct {
-    int x;
-    int y;
+    int16_t x;
+    int16_t y;
 } v2i_t;
 
 float signf(float x);

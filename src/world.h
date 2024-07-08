@@ -13,9 +13,7 @@ typedef enum {
 } tile_type_t;
 
 typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t color;
 } tile_colored_t;
 
 typedef struct {
@@ -27,8 +25,8 @@ typedef struct {
 
 typedef struct {
     tile_t tiles[MAX_WORLD_HEIGHT][MAX_WORLD_WIDTH];
-    int height;
-    int width;
+    int16_t height;
+    int16_t width;
 } world_t;
 
 bool world_contains_v2f(const world_t *world, v2f_t vec);

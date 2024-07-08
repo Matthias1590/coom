@@ -8,16 +8,17 @@ bool io_init(void);
 bool io_update(void);
 
 typedef enum {
-    KEY_W,
-    KEY_A,
-    KEY_S,
-    KEY_D,
+    KEY_NONE = 0,
+    KEY_W = 119,
+    KEY_A = 97,
+    KEY_S = 115,
+    KEY_D = 100,
 } io_key_t;
 
-uint64_t get_current_time(void);
+uint16_t get_current_time(void);
 
-bool is_key_down(io_key_t key);
+uint8_t get_pressed_key(void);
 
 void update_screen(void);
-void set_color(uint8_t r, uint8_t g, uint8_t b);
+void set_color(uint8_t color);
 void draw_rect(v2i_t top_left, v2i_t size);

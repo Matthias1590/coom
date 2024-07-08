@@ -17,7 +17,7 @@
     })
 
 typedef struct {
-    uint64_t last_frame_time;
+    uint16_t last_frame_time;
     player_t player;
     world_t world;
 } state_t;
