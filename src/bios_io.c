@@ -8,7 +8,6 @@
 static void draw_pixel(v2i_t position);
 
 bool io_init(void) {
-    // set video mode 0x13 (320x200, 256 colors)
     asm volatile (
         "mov $0x13, %%ax\n"
         "int $0x10\n"
@@ -18,28 +17,6 @@ bool io_init(void) {
     );
 
     return true;
-}
-
-static void putchar(char c) {
-    asm volatile (
-        "mov $0x0e, %%ah\n"
-        "mov %0, %%al\n"
-        "mov $0x00, %%bh\n"
-        "mov $0x07, %%bl\n"
-        "int $0x10\n"
-        :
-        : "g"(c)
-        : "%ah", "%al", "%bh", "%bl"
-    );
-}
-
-static void putnbr(uint16_t nbr) {
-    if (nbr < 10) {
-        putchar(nbr + '0');
-        return;
-    }
-    putnbr(nbr / 10);
-    putnbr(nbr % 10);
 }
 
 bool io_update(void) {
@@ -112,4 +89,28 @@ void draw_rect(v2i_t top_left, v2i_t size) {
             draw_pixel(v2i_add(top_left, V2I(x, y)));
         }
     }
+}
+
+void putchar(char c) {
+    asm volatile (
+        "mov $0x0e, %%ah\n"
+        "mov %0, %%al\n"
+        "mov $0x00, %%bh\n"
+        "mov $0x07, %%bl\n"
+        "int $0x10\n"
+        :
+        : "g"(c)
+        : "%al", "%ah", "%bh", "%bl"
+    );
+}
+
+void putnbr(int16_t x) {
+    if (x < 0) {
+        putchar('-');
+        x = -x;
+    }
+    if (x > 10) {
+        putnbr(x / 10);
+    }
+    putchar('0' + (x % 10));
 }

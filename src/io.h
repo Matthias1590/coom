@@ -22,3 +22,5 @@ uint8_t get_pressed_key(void);
 void update_screen(void);
 void set_color(uint8_t color);
 void draw_rect(v2i_t top_left, v2i_t size);
+void putchar(char c);
+void putnbr(int16_t x);

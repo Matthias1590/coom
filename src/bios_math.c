@@ -1,24 +1,7 @@
 #include "bios_math.h"
 
 #include <stdint.h>
-
-static int16_t float_to_int_floor(float f) {
-    int16_t result;
-
-    return f;
-    
-    // Inline assembly to floor float to integer
-    asm volatile (
-        "fld %1 \n"         // Load float value into FPU stack
-        "frndint \n"        // Round towards nearest integer (truncate decimals)
-        "fistp %0 \n"       // Store integer result from FPU stack to result variable
-        : "=m" (result)     // Output: result as integer
-        : "m" (f)           // Input: f as float
-        : "st"              // Clobbers FPU stack
-    );
-
-    return result;
-}
+#include "maths.h"
 
 int16_t absi(int16_t x) {
     if (x < 0) {
@@ -41,7 +24,7 @@ float cosf(float x) {
 
     // Polynomial approximation for cos(x) around 0
     float x2 = x * x;
-    return 1.0f - x2 / 2.0f + x2 * x2 / 24.0f;
+    return 1.0f - x2 / 2.0f + x2 * x2 / 24.0f - x2 * x2 * x2 / 720.0f + x2 * x2 * x2 * x2 / 40320.0f;
 }
 
 float sinf(float x) {
@@ -51,7 +34,7 @@ float sinf(float x) {
 
     // Polynomial approximation for sin(x) around 0
     float x2 = x * x;
-    return x * (1.0f - x2 / 6.0f);
+    return x * (1.0f - x2 / 6.0f + x2 * x2 / 120.0f - x2 * x2 * x2 / 5040.0f + x2 * x2 * x2 * x2 / 362880.0f);
 }
 
 float atan2f(float y, float x) {
@@ -81,7 +64,7 @@ float atan2f(float y, float x) {
 }
 
 float ceilf(float x) {
-    int16_t xi = float_to_int_floor(x);
+    int16_t xi = ifloorf(x);
     float result = (float)xi;
     
     if (result < x) {
@@ -92,7 +75,7 @@ float ceilf(float x) {
 }
 
 float floorf(float x) {
-    int16_t xi = float_to_int_floor(x);
+    int16_t xi = ifloorf(x);
     float result = (float)xi;
     
     if (result > x) {
