@@ -9,15 +9,14 @@ bool io_update(void);
 
 typedef enum {
     KEY_NONE = 0,
-    KEY_W = 119,
-    KEY_A = 97,
-    KEY_S = 115,
-    KEY_D = 100,
+    KEY_W = 17,
+    KEY_A = 30,
+    KEY_S = 31,
+    KEY_D = 32,
 } io_key_t;
 
 uint16_t get_current_time(void);
-
-uint8_t get_pressed_key(void);
+bool is_key_pressed(io_key_t key);
 
 void update_screen(void);
 void set_color(uint8_t color);

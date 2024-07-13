@@ -4,7 +4,7 @@
 #include "bios_math.h"
 
 #define TWO_PI 6.28318530718
-#define EPS 0.00001
+#define EPSILON 0.00001
 
 #define DEG_TO_RAD(a) \
     ((a)*(PI/180.0f))
@@ -38,10 +38,12 @@ typedef struct {
 } v2i_t;
 
 int16_t ifloorf(float x);
+int16_t iceilf(float x);
 float signf(float x);
 float minf(float a, float b);
 deg_t wrap_degs(deg_t angle);
 
+float v2f_dot(v2f_t vec_a, v2f_t vec_b);
 v2f_t v2f_from_angle(rad_t angle);
 rad_t v2f_to_angle(v2f_t vec);
 float v2f_get_slope(v2f_t vec);

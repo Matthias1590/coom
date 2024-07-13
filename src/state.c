@@ -1,5 +1,6 @@
 #include "state.h"
 
+#include "config.h"
 #include "bios_math.h"
 #include "maths.h"
 #include "world.h"
@@ -8,13 +9,10 @@
 #define SCREEN_HEIGHT 200
 #define SCREEN_WIDTH 320
 
-#define ROTATE_SPEED 20
-#define MOVE_SPEED 100
-
 #define TILE_SIZE 8
 
-#define NEAR_CLIPPING_DISTANCE 0.01
-#define FAR_CLIPPING_DISTANCE 10.0
+#define ROTATE_SPEED 20
+#define MOVE_SPEED 100
 #define FOV_DEG 75.0f
 
 bool state_init(state_t *state) {
@@ -23,19 +21,30 @@ bool state_init(state_t *state) {
         return false;
     }
 
+    uint8_t *ptr = (uint8_t *)state;
+    for (uint64_t i = 0; i < sizeof(state_t); i++) {
+        ptr[i] = 0;
+    }
+
     // init player
-    state->player.position = V2F(3.5, 3.5);
-    state->player.rotation = DEG_TO_RAD(-150);
+    state->player.position = V2F(3.5, 7.5);
+    state->player.rotation = DEG_TO_RAD(-160);
 
     // init world
     state->world.height = 20;
-    state->world.width = 20;
-    // state->world.tiles[0+1][0+1].type = TILE_COLORED;
-    // state->world.tiles[0+1][0+1].as_colored.color = 210;
-    // state->world.tiles[1+1][0+1].type = TILE_COLORED;
-    // state->world.tiles[1+1][0+1].as_colored.color = 53;
-    state->world.tiles[2+1][0+1].type = TILE_COLORED;
-    state->world.tiles[2+1][0+1].as_colored.color = 112;
+    state->world.width = 30;
+
+    state->world.tiles[1][1].type = TILE_COLORED;
+    state->world.tiles[1][1].as_colored.color = 95;
+    state->world.tiles[2][1].type = TILE_COLORED;
+    state->world.tiles[2][1].as_colored.color = 53;
+    state->world.tiles[3][1].type = TILE_COLORED;
+    state->world.tiles[3][1].as_colored.color = 112;
+
+    for (int i = 0; i < 20; i++) {
+        state->world.tiles[i][6].type = TILE_COLORED;
+        state->world.tiles[i][6].as_colored.color = 95;
+    }
 
     return true;
 }
@@ -64,11 +73,11 @@ static v2f_t get_next_point_on_ray(v2f_t current, v2f_t direction, float dir_slo
     v2f_t nx = current;
     if (direction.x > 0)
     {
-        nx.x = ceilf(current.x + EPS);
+        nx.x = ceilf(current.x + EPSILON);
     }
     else
     {
-        nx.x = floorf(current.x - EPS);
+        nx.x = floorf(current.x - EPSILON);
     }
     float dx = nx.x - current.x;
     nx.y += dx * dir_slope;
@@ -76,11 +85,11 @@ static v2f_t get_next_point_on_ray(v2f_t current, v2f_t direction, float dir_slo
     v2f_t ny = current;
     if (direction.y > 0)
     {
-        ny.y = ceilf(current.y + EPS);
+        ny.y = ceilf(current.y + EPSILON);
     }
     else
     {
-        ny.y = floorf(current.y - EPS);
+        ny.y = floorf(current.y - EPSILON);
     }
     float dy = ny.y - current.y;
     ny.x += dy / dir_slope;
@@ -96,27 +105,32 @@ static v2f_t get_next_point_on_ray(v2f_t current, v2f_t direction, float dir_slo
 
 static ray_hit_t cast_ray(const world_t *world, v2f_t start, v2f_t direction) {
     float dir_slope = v2f_get_slope(direction);
+    v2f_t direction_eps = v2f_scale(direction, EPSILON);
 
     v2f_t current = start;
-    v2f_t current_pushed = v2f_add(current, v2f_scale(direction, EPS));
+    v2f_t current_pushed = v2f_add(current, direction_eps);
     while (world_contains_v2f(world, current_pushed))
     {
         v2i_t current_floored = v2f_floor_to_v2i(current_pushed);
         if (world_is_filled(world, current_floored))
         {
+#ifdef MINIMAP
             // draw green
             set_color(50);
-            draw_rect(v2f_floor_to_v2i(v2f_scale(current_pushed, TILE_SIZE)), V2I(1, 1));
+            draw_rect(v2f_floor_to_v2i(v2f_scale(current, TILE_SIZE)), V2I(1, 1));
+#endif
 
             return RAY_HIT(current);
         }
 
+#ifdef MINIMAP
         // draw purple
         set_color(5);
         draw_rect(v2f_floor_to_v2i(v2f_scale(current_pushed, TILE_SIZE)), V2I(1, 1));
+#endif
 
         current = get_next_point_on_ray(current, direction, dir_slope);
-        current_pushed = v2f_add(current, v2f_scale(direction, EPS));
+        current_pushed = v2f_add(current, direction_eps);
     }
 
     return RAY_MISS();
@@ -156,37 +170,42 @@ bool state_update(state_t *state) {
         return false;
     }
 
-    uint8_t key = get_pressed_key();
-
     // rotate player
     float rotate_amount = 0;
-    if (key == KEY_A) {
+    if (is_key_pressed(KEY_A)) {
         rotate_amount -= 1;
     }
-    if (key == KEY_D) {
+    if (is_key_pressed(KEY_D)) {
         rotate_amount += 1;
     }
-    rotate_amount = -1;
+    // rotate_amount = -2;
     state->player.rotation += rotate_amount * delta_time * ROTATE_SPEED;
 
     // move player
     float move_amount = 0;
-    if (key == KEY_W) {
+    if (is_key_pressed(KEY_W)) {
         move_amount += 1;
     }
-    if (key == KEY_S) {
+    if (is_key_pressed(KEY_S)) {
         move_amount -= 1;
     }
     // move_amount = 0.3;
     state->player.position = v2f_add(state->player.position, v2f_scale(v2f_from_angle(state->player.rotation), move_amount * delta_time * MOVE_SPEED));
 
     // draw screen
+#ifdef MINIMAP
     draw_world(&state->world);
+#endif
 
-    // todo: figure out if and why we need a near and far clipping plane
+    // todo: fix ifloorf, casting to int crashes and the inline assembly doesnt work properly
+    // todo: fix the fact that half the faces arent detected by the raycaster
+    // todo: fix the off-by-one in the casting logic
+    // todo: reimplement keyboard io so we can move and rotate ourselves again
+    // todo: add textures?
     // todo: fix the inverse fisheye effect
+    // todo: figure out if and why we need a near and far clipping plane
     for (int16_t x = 0; x < SCREEN_WIDTH; x++) {
-        rad_t direction = DEG_TO_RAD(wrap_degs(RAD_TO_DEG(state->player.rotation) + (x - SCREEN_WIDTH / 2) * (FOV_DEG / SCREEN_WIDTH)));
+        rad_t direction = state->player.rotation + (x - SCREEN_WIDTH / 2) * (DEG_TO_RAD(FOV_DEG) / SCREEN_WIDTH);
         v2f_t direction_vec = v2f_from_angle(direction);
 
         ray_hit_t hit = cast_ray(&state->world, state->player.position, direction_vec);
@@ -194,12 +213,10 @@ bool state_update(state_t *state) {
             continue;
         }
 
-        float euclidean_distance = sqrtf(v2f_squared_distance(state->player.position, hit.position));
-        float perpendicular_distance = euclidean_distance * cosf(direction - state->player.rotation);
+        float perpendicular_distance = v2f_dot(v2f_sub(hit.position, state->player.position), v2f_from_angle(state->player.rotation));
+        int16_t wall_height = ifloorf(SCREEN_HEIGHT / perpendicular_distance);
 
-        int16_t wall_height = ifloorf(SCREEN_HEIGHT / euclidean_distance);
-
-        v2i_t tile_pos = v2f_floor_to_v2i(v2f_add(hit.position, v2f_scale(direction_vec, EPS)));
+        v2i_t tile_pos = v2f_floor_to_v2i(v2f_add(hit.position, v2f_scale(direction_vec, EPSILON)));
         tile_t tile = state->world.tiles[tile_pos.y][tile_pos.x];
         switch (tile.type) {
             case TILE_EMPTY: {
@@ -213,9 +230,11 @@ bool state_update(state_t *state) {
         }
     }
 
+#ifdef MINIMAP
     set_color(15);
     draw_rect(v2f_floor_to_v2i(v2f_scale(state->player.position, TILE_SIZE)), V2I(3, 3));
     draw_rect(v2f_floor_to_v2i(v2f_scale(v2f_add(state->player.position, v2f_from_angle(state->player.rotation)), TILE_SIZE)), V2I(1, 1));
+#endif
 
     update_screen();
 

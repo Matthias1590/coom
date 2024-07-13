@@ -19,7 +19,49 @@ bool io_init(void) {
     return true;
 }
 
+static bool keystates[128] = {0};
+
 bool io_update(void) {
+    asm volatile (
+        "mov $128, %%cx\n"
+        "mov %0, %%di\n"
+        "xor %%al, %%al\n"
+        "rep stosb\n"
+        :
+        : "g"(keystates)
+        : "%cx", "%di", "%al"
+    );
+
+    while (true) {
+        bool pressed = false;
+        asm volatile (
+            "mov $1, %%ah\n"
+            "int $0x16\n"
+            "jz no_key_pressed\n"
+            "mov $1, %0\n"
+            "no_key_pressed:\n"
+            : "=g"(pressed)
+            :
+            : "%ah"
+        );
+
+        if (!pressed) {
+            break;
+        }
+
+        uint8_t key_index = 0;
+        asm volatile (
+            "mov $0, %%ah\n"
+            "int $0x16\n"
+            "mov %%ah, %0\n"
+            : "=g"(key_index)
+            :
+            : "%ah"
+        );
+
+        keystates[key_index] = true;
+    }
+
     return true;
 }
 
@@ -40,8 +82,8 @@ uint16_t get_current_time(void) {
     return time;
 }
 
-uint8_t get_pressed_key(void) {
-    return KEY_NONE;
+bool is_key_pressed(io_key_t key) {
+    return keystates[key];
 }
 
 extern uint8_t backbuffer[];

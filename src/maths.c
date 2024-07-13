@@ -4,16 +4,29 @@
 #include "bios_math.h"
 
 int16_t ifloorf(float x) {
-    int16_t result;
+    if (x < 0) {
+        return -iceilf(-x);
+    }
 
-    asm volatile (
-        "fld %1\n"
-        "frndint\n"
-        "fistp %0\n"
-        : "=m" (result)
-        : "m" (x)
-        : "st"
-    );
+    int16_t result = 0;
+    while (x >= 1) {
+        x -= 1;
+        result++;
+    }
+
+    return result;
+}
+
+int16_t iceilf(float x) {
+    if (x < 0) {
+        return -ifloorf(-x);
+    }
+
+    int16_t result = 0;
+    while (x > 0) {
+        x -= 1;
+        result++;
+    }
 
     return result;
 }
@@ -43,6 +56,10 @@ deg_t wrap_degs(deg_t angle) {
         angle += 360.0f;
     }
     return angle;
+}
+
+float v2f_dot(v2f_t vec_a, v2f_t vec_b) {
+    return vec_a.x * vec_b.x + vec_a.y * vec_b.y;
 }
 
 v2f_t v2f_from_angle(rad_t angle) {
